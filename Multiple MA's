@@ -1,0 +1,48 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © scavengerbot
+
+//@version=4
+study(title="Multi MA's Alerts", overlay=true)
+
+// ALGO
+fma = input(50, "Fast EMA Length", type = input.integer)
+sma = input(200, "Slow EMA Length", type = input.integer)
+
+
+ma1 = ema(close, fma)
+ma2 = ema(close, sma)
+
+useInput = input(true, title = "Use Alternate Timeframe?")
+emaInput = input("120", "Chart Alternate Timeframe")
+
+x = if useInput == true
+    emaInput
+else
+    timeframe.period
+    
+
+ema1 = security(syminfo.tickerid, x, ma1)
+ema2 = security(syminfo.tickerid, x, ma2)
+
+
+
+//PLOTS
+
+plot(ema1, color=#ff29ea, transp=0, title = "FAST EMA")
+plot(ema2, color=#0095ff, transp=0, title = "SLOW EMA")
+
+
+//ALERTS
+
+buySignal = crossover(ema1,ema2)
+sellSignal = crossunder(ema1,ema2)
+
+alertcondition(buySignal, title="BUY")
+alertcondition(sellSignal, title="SELL")
+
+if buySignal 
+    label.new(bar_index, na, 'BUY', color=color.green, textcolor=color.white, style=label.style_label_up, size=size.small, yloc=yloc.belowbar)
+    
+if sellSignal 
+    label.new(bar_index, na, 'SELL', color=color.red, textcolor=color.white, style=label.style_label_down, size=size.small, yloc=yloc.abovebar)
+    
