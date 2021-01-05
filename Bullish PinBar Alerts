@@ -1,0 +1,55 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © scavengerbot
+
+// Reference to @TsangYouJun Holy Grail Modified & Added Alerts
+
+//@version=4
+study("PinBar Alerts", overlay=true)
+
+// User Input
+usr_risk = input(title="Equity Risk (%)",type=input.integer,minval=1,maxval=100,step=1,defval=3,confirm=false)
+atr_mult = input(title="Stop Loss (x*ATR, Float)",type=input.float,minval=0.1,maxval=100,step=0.1,defval=0.35,confirm=false)
+slPoints = input(title="Stop Loss Trail Points (Pips)",type=input.integer,minval=1,maxval=1000,step=1,defval=1,confirm=false)
+slOffset = input(title="Stop Loss Trail Offset (Pips)",type=input.integer,minval=1,maxval=1000,step=1,defval=1,confirm=false)
+sma_slow = input(title="Slow SMA (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=50,confirm=false)
+ema_medm = input(title="Medm EMA (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=18,confirm=false)
+ema_fast = input(title="Fast EMA (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=6,confirm=false)
+atr_valu = input(title="ATR (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=14,confirm=false)
+ent_canc = input(title="Cancel Entry After X Bars (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=7,confirm=false)
+
+// Create Indicators
+slowSMA = sma(close, sma_slow)
+medmEMA = ema(close, ema_medm)
+fastEMA = ema(close, ema_fast)
+bullishPinBar = ((close > open) and ((open - low) > 0.66 * (high - low))) or ((close < open) and ((close - low) > 0.66 * (high - low)))
+bearishPinBar = ((close > open) and ((high - close) > 0.66 * (high - low))) or ((close < open) and ((high - open) > 0.66 * (high - low)))
+atr = atr(atr_valu)
+
+// Specify Trend Conditions
+fanUpTrend = (fastEMA > medmEMA) and (medmEMA > slowSMA)
+fanDnTrend = (fastEMA < medmEMA) and (medmEMA < slowSMA)
+
+// Specify Piercing Conditions
+bullPierce = ((low < fastEMA) and (open > fastEMA) and (close > fastEMA)) or ((low < medmEMA) and (open > medmEMA) and (close > medmEMA)) or ((low < slowSMA) and (open > slowSMA) and (close > slowSMA))
+bearPierce = ((high > fastEMA) and (open < fastEMA) and (close < fastEMA)) or ((high > medmEMA) and (open < medmEMA) and (close < medmEMA)) or ((high > slowSMA) and (open < slowSMA) and (close < slowSMA))
+    
+// Specify Entry Conditions
+longEntry = fanUpTrend and bullishPinBar and bullPierce
+shortEntry = fanDnTrend and bearishPinBar and bearPierce
+
+
+// Plot Moving Averages to Chart
+plot(fastEMA, color=color.red)
+plot(medmEMA, color=color.blue)
+plot(slowSMA, color=color.green)
+
+
+alertcondition(longEntry, title="BUY")
+alertcondition(shortEntry, title="SELL")
+
+if longEntry 
+    label.new(bar_index, na, 'BUY', color=color.green, textcolor=color.black, style=label.style_label_up, size=size.small, yloc=yloc.belowbar)
+    
+if shortEntry 
+    label.new(bar_index, na, 'SELL', color=color.red, textcolor=color.black, style=label.style_label_down, size=size.small, yloc=yloc.abovebar)
+  
